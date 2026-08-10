@@ -1,0 +1,9 @@
+# Copie este arquivo para terraform.tfvars e ajuste se necessario.
+# terraform.tfvars esta no .gitignore e nao deve ser versionado.
+
+regiao      = "us-east-1"
+projeto     = "pethub"
+ambiente    = "dev"
+cidr_vpc    = "10.0.0.0/16"
+cidr_subnet = "10.0.1.0/24"
+porta_api   = 3000

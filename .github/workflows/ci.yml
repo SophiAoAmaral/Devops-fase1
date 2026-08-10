@@ -1,0 +1,102 @@
+name: CI - PetHub
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  backend:
+    name: Back-end
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar o codigo
+        uses: actions/checkout@v4
+
+      - name: Instalar o Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Instalar as dependencias
+        working-directory: backend
+        run: npm ci
+
+      - name: Verificar o estilo do codigo
+        working-directory: backend
+        run: npm run lint
+
+      - name: Executar os testes
+        working-directory: backend
+        run: npm test
+
+      - name: Construir a imagem Docker
+        working-directory: backend
+        run: docker build -t pethub-api .
+
+  frontend:
+    name: Front-end
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar o codigo
+        uses: actions/checkout@v4
+
+      - name: Instalar o Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Instalar as dependencias
+        working-directory: frontend
+        run: npm ci
+
+      - name: Verificar o estilo do codigo
+        working-directory: frontend
+        run: npm run lint
+
+      - name: Executar os testes
+        working-directory: frontend
+        run: npm test
+
+      - name: Gerar o build de producao
+        working-directory: frontend
+        run: npm run build
+
+      - name: Guardar o build como artefato
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: frontend/dist
+
+  terraform:
+    name: Infraestrutura
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar o codigo
+        uses: actions/checkout@v4
+
+      - name: Instalar o Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: '1.9.8'
+
+      - name: Verificar a formatacao dos arquivos
+        working-directory: infra
+        run: terraform fmt -check
+
+      - name: Inicializar
+        working-directory: infra
+        run: terraform init -backend=false
+
+      - name: Validar a configuracao
+        working-directory: infra
+        run: terraform validate

@@ -1,0 +1,27 @@
+{
+  "name": "pethub-frontend",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "test": "vitest run",
+    "lint": "eslint src --ext .js,.jsx"
+  },
+  "engines": { "node": ">=22.0.0" },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.4.8",
+    "@testing-library/react": "^16.0.0",
+    "@vitejs/plugin-react": "^6.0.0",
+    "eslint": "^8.57.0",
+    "eslint-plugin-react": "^7.35.0",
+    "jsdom": "^24.1.1",
+    "vite": "^8.0.0",
+    "vitest": "^4.0.0"
+  }
+}
