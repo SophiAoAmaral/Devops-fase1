@@ -1,14 +1,39 @@
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
 const pets = require('./pets');
+const { registro, medir, petsCadastrados } = require('./metrics');
 
 const app = express();
 
-app.use(cors());
-app.use(express.json());
+const VERSAO = process.env.APP_VERSION || 'dev';
+const ORIGENS = (process.env.CORS_ORIGIN || '*').split(',').map((o) => o.trim());
 
+app.disable('x-powered-by');
+app.use(helmet());
+app.use(cors({ origin: ORIGENS.includes('*') ? '*' : ORIGENS }));
+app.use(express.json({ limit: '10kb' }));
+app.use(medir);
+
+// Liveness: responde enquanto o processo estiver de pe. O Kubernetes reinicia
+// o container quando esta sonda falha.
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok' });
+  res.json({ status: 'ok', versao: VERSAO, tempoDeVida: process.uptime() });
+});
+
+// Readiness: so entra no balanceador quando a aplicacao aceita trafego. Durante
+// o encerramento gracioso ela passa a responder 503 sem derrubar o processo.
+app.get('/ready', (req, res) => {
+  if (app.locals.encerrando) {
+    return res.status(503).json({ status: 'encerrando' });
+  }
+  return res.json({ status: 'pronto', versao: VERSAO });
+});
+
+app.get('/metrics', async (req, res) => {
+  petsCadastrados.set(pets.listar().length);
+  res.set('Content-Type', registro.contentType);
+  res.send(await registro.metrics());
 });
 
 app.get('/api/pets', (req, res) => {

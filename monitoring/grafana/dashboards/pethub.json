@@ -1,0 +1,123 @@
+{
+  "uid": "pethub-visao-geral",
+  "title": "PetHub - Visao Geral",
+  "tags": ["pethub", "fase2"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": { "from": "now-1h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Disponibilidade da API",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "Fora do ar", "color": "red" }, "1": { "text": "No ar", "color": "green" } } }
+          ]
+        }
+      },
+      "targets": [
+        { "refId": "A", "expr": "up{job=\"pethub-api\"}", "legendFormat": "API" }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Pets cadastrados",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+      "targets": [
+        { "refId": "A", "expr": "pethub_pets_cadastrados", "legendFormat": "pets" }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Taxa de erro (5xx)",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 0.01 },
+              { "color": "red", "value": 0.05 }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate(pethub_http_requisicoes_total{status=~\"5..\"}[5m])) / clamp_min(sum(rate(pethub_http_requisicoes_total[5m])), 0.0001)",
+          "legendFormat": "erro"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Tempo no ar",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+      "fieldConfig": { "defaults": { "unit": "s" } },
+      "targets": [
+        { "refId": "A", "expr": "time() - process_start_time_seconds{job=\"pethub-api\"}", "legendFormat": "uptime" }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Requisicoes por segundo, por rota",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "fieldConfig": { "defaults": { "unit": "reqps" } },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (rota) (rate(pethub_http_requisicoes_total[5m]))",
+          "legendFormat": "{{rota}}"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Latencia p50 / p95 / p99",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "fieldConfig": { "defaults": { "unit": "s" } },
+      "targets": [
+        { "refId": "A", "expr": "histogram_quantile(0.50, sum(rate(pethub_http_duracao_segundos_bucket[5m])) by (le))", "legendFormat": "p50" },
+        { "refId": "B", "expr": "histogram_quantile(0.95, sum(rate(pethub_http_duracao_segundos_bucket[5m])) by (le))", "legendFormat": "p95" },
+        { "refId": "C", "expr": "histogram_quantile(0.99, sum(rate(pethub_http_duracao_segundos_bucket[5m])) by (le))", "legendFormat": "p99" }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Respostas por status HTTP",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (status) (rate(pethub_http_requisicoes_total[5m]))",
+          "legendFormat": "HTTP {{status}}"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Memoria e CPU do processo",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+      "fieldConfig": { "defaults": { "unit": "bytes" } },
+      "targets": [
+        { "refId": "A", "expr": "process_resident_memory_bytes{job=\"pethub-api\"}", "legendFormat": "memoria residente" },
+        { "refId": "B", "expr": "nodejs_heap_size_used_bytes{job=\"pethub-api\"}", "legendFormat": "heap usado" }
+      ]
+    }
+  ]
+}

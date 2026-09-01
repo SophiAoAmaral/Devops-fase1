@@ -1,0 +1,44 @@
+groups:
+  - name: pethub-disponibilidade
+    rules:
+      - alert: ApiForaDoAr
+        expr: up{job="pethub-api"} == 0
+        for: 1m
+        labels:
+          severidade: critica
+        annotations:
+          resumo: "A API do PetHub parou de responder."
+          descricao: "O Prometheus nao consegue coletar metricas de {{ $labels.instance }} ha mais de 1 minuto."
+
+      - alert: TaxaDeErroAlta
+        expr: |
+          sum(rate(pethub_http_requisicoes_total{status=~"5.."}[5m]))
+            / sum(rate(pethub_http_requisicoes_total[5m])) > 0.05
+        for: 5m
+        labels:
+          severidade: alta
+        annotations:
+          resumo: "Mais de 5% das requisicoes estao falhando."
+          descricao: "A taxa de respostas 5xx passou de 5% na janela de 5 minutos."
+
+      - alert: LatenciaAlta
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum(rate(pethub_http_duracao_segundos_bucket[5m])) by (le)
+          ) > 0.5
+        for: 5m
+        labels:
+          severidade: media
+        annotations:
+          resumo: "O percentil 95 de latencia passou de 500ms."
+          descricao: "A API esta lenta ha 5 minutos; verificar carga e dependencias."
+
+      - alert: MemoriaAlta
+        expr: process_resident_memory_bytes{job="pethub-api"} > 300 * 1024 * 1024
+        for: 10m
+        labels:
+          severidade: media
+        annotations:
+          resumo: "A API passou de 300MB de memoria residente."
+          descricao: "Possivel vazamento de memoria no processo Node.js."

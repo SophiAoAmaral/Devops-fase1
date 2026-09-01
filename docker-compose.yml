@@ -1,0 +1,87 @@
+# Stack completa da Fase 2: aplicacao + observabilidade.
+# Subir com: ./scripts/deploy.sh local
+
+services:
+  backend:
+    build:
+      context: ./backend
+      args:
+        APP_VERSION: ${APP_VERSION:-dev}
+    image: ${REGISTRY:-pethub}/pethub-api:${TAG:-local}
+    container_name: pethub-backend
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      APP_VERSION: ${APP_VERSION:-dev}
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+    expose:
+      - "3000"
+    ports:
+      - "${PORTA_API:-3000}:3000"
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "http://localhost:3000/ready"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    networks: [pethub]
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: ${VITE_API_URL:-}
+    image: ${REGISTRY:-pethub}/pethub-web:${TAG:-local}
+    container_name: pethub-frontend
+    ports:
+      - "${PORTA_WEB:-8080}:8080"
+    # So sobe depois que a API responde /ready, evitando a tela de erro
+    # no primeiro carregamento.
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    networks: [pethub]
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: pethub-prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=7d
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/alertas.yml:/etc/prometheus/alertas.yml:ro
+      - prometheus-dados:/prometheus
+    ports:
+      - "${PORTA_PROMETHEUS:-9090}:9090"
+    depends_on: [backend]
+    restart: unless-stopped
+    networks: [pethub]
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    container_name: pethub-grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USUARIO:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_SENHA:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-dados:/var/lib/grafana
+    ports:
+      - "${PORTA_GRAFANA:-3001}:3000"
+    depends_on: [prometheus]
+    restart: unless-stopped
+    networks: [pethub]
+
+volumes:
+  prometheus-dados:
+  grafana-dados:
+
+networks:
+  pethub:
+    driver: bridge

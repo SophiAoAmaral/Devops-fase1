@@ -12,3 +12,7 @@ terraform.tfvars
 
 # Sistema
 .DS_Store
+
+# Deploy
+.deploy/
+logs-*.txt

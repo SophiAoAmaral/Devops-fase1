@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pethub-config
+  namespace: pethub
+data:
+  NODE_ENV: production
+  PORT: "3000"
+  CORS_ORIGIN: "*"

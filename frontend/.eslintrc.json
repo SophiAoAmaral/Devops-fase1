@@ -28,6 +28,7 @@
   "overrides": [
     {
       "files": [
+        "**/*.test.js",
         "**/*.test.jsx",
         "src/setupTests.js"
       ],

@@ -35,9 +35,6 @@ jobs:
         working-directory: backend
         run: npm test
 
-      - name: Construir a imagem Docker
-        working-directory: backend
-        run: docker build -t pethub-api .
 
   frontend:
     name: Front-end
@@ -100,3 +97,71 @@ jobs:
       - name: Validar a configuracao
         working-directory: infra
         run: terraform validate
+
+  integracao:
+    name: Integracao em containers
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+
+    steps:
+      - name: Baixar o codigo
+        uses: actions/checkout@v4
+
+      - name: Conferir a sintaxe do docker-compose
+        run: docker compose config --quiet
+
+      - name: Subir a stack completa
+        run: ./scripts/deploy.sh local
+
+      # Prova que os containers conversam entre si: o front-end responde e
+      # o proxy /api chega ate a API.
+      - name: Verificar o front-end e o proxy da API
+        run: |
+          curl -fs http://localhost:8080/ > /dev/null
+          curl -fs http://localhost:8080/api/pets > /dev/null
+
+      - name: Verificar se o Prometheus esta coletando a API
+        run: |
+          for i in $(seq 1 20); do
+            estado=$(curl -fs 'http://localhost:9090/api/v1/targets?state=active' \
+              | grep -o '"health":"up"' | head -1 || true)
+            if [ -n "$estado" ]; then echo "Alvo coletado com sucesso."; exit 0; fi
+            sleep 3
+          done
+          echo "O Prometheus nao coletou a API a tempo." >&2
+          exit 1
+
+      - name: Confirmar que o container nao roda como root
+        run: |
+          usuario=$(docker exec pethub-backend whoami)
+          echo "A API roda como: $usuario"
+          [ "$usuario" != "root" ]
+
+      - name: Guardar os logs quando algo falhar
+        if: failure()
+        run: docker compose logs --no-color
+
+      - name: Derrubar a stack
+        if: always()
+        run: docker compose down -v
+
+  manifestos:
+    name: Validar os manifests do Kubernetes
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar o codigo
+        uses: actions/checkout@v4
+
+      - name: Instalar o kubeconform
+        run: |
+          curl -sSL -o kubeconform.tar.gz \
+            https://github.com/yannh/kubeconform/releases/download/v0.6.7/kubeconform-linux-amd64.tar.gz
+          tar xf kubeconform.tar.gz kubeconform
+          sudo mv kubeconform /usr/local/bin/
+
+      - name: Validar os manifests contra o esquema do Kubernetes
+        # O kind-cluster.yaml descreve o cluster local, nao um objeto da API.
+        run: |
+          kubeconform -strict -summary -kubernetes-version 1.30.0 \
+            -ignore-filename-pattern 'kind-cluster.*' k8s/

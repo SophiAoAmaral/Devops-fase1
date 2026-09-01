@@ -1,0 +1,121 @@
+name: Seguranca - PetHub
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Toda segunda as 06:00 UTC: pega vulnerabilidade divulgada depois do merge.
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  dependencias:
+    name: Auditar as dependencias
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        pasta: [backend, frontend]
+
+    steps:
+      - name: Baixar o codigo
+        uses: actions/checkout@v4
+
+      - name: Instalar o Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: ${{ matrix.pasta }}/package-lock.json
+
+      - name: Procurar vulnerabilidades conhecidas
+        working-directory: ${{ matrix.pasta }}
+        run: npm audit --audit-level=high
+
+  codigo:
+    name: Analise estatica (CodeQL)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Baixar o codigo
+        uses: actions/checkout@v4
+
+      - name: Preparar o CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+          queries: security-and-quality
+
+      - name: Analisar
+        uses: github/codeql-action/analyze@v3
+
+  segredos:
+    name: Procurar segredos no historico
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar o codigo
+        uses: actions/checkout@v4
+        with:
+          # O Gitleaks precisa do historico inteiro para varrer commits antigos.
+          fetch-depth: 0
+
+      - name: Rodar o Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  containers:
+    name: Varrer os Dockerfiles e a imagem
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar o codigo
+        uses: actions/checkout@v4
+
+      - name: Conferir boas praticas do Dockerfile da API
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: backend/Dockerfile
+
+      - name: Conferir boas praticas do Dockerfile do front-end
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: frontend/Dockerfile
+
+      - name: Construir a imagem da API para varredura
+        run: docker build -t pethub-api:varredura ./backend
+
+      - name: Procurar vulnerabilidades na imagem
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: pethub-api:varredura
+          format: table
+          severity: CRITICAL,HIGH
+          exit-code: '1'
+          ignore-unfixed: true
+
+  infraestrutura:
+    name: Varrer a infraestrutura como codigo
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar o codigo
+        uses: actions/checkout@v4
+
+      - name: Analisar os arquivos Terraform e os manifests
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: config
+          scan-ref: .
+          format: table
+          severity: CRITICAL,HIGH
+          exit-code: '0'

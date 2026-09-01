@@ -38,3 +38,26 @@ variable "porta_api" {
   type        = number
   default     = 3000
 }
+
+variable "retencao_logs" {
+  description = "Dias de retencao dos logs da aplicacao no CloudWatch."
+  type        = number
+  default     = 14
+
+  validation {
+    condition     = var.retencao_logs >= 1
+    error_message = "A retencao deve ser de ao menos 1 dia."
+  }
+}
+
+variable "email_alertas" {
+  description = "E-mail que recebe os alarmes. Vazio desliga a inscricao."
+  type        = string
+  default     = ""
+}
+
+variable "tag_imagem" {
+  description = "Tag da imagem publicada no ECR que o ambiente deve executar."
+  type        = string
+  default     = "latest"
+}

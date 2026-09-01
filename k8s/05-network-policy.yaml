@@ -1,0 +1,22 @@
+# Segmentacao de rede: o backend so aceita trafego do frontend e do
+# Prometheus, nunca de qualquer pod do cluster.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: pethub-backend
+  namespace: pethub
+spec:
+  podSelector:
+    matchLabels: { app: pethub-backend }
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels: { app: pethub-frontend }
+        - namespaceSelector:
+            matchLabels: { name: ingress-nginx }
+        - namespaceSelector:
+            matchLabels: { name: monitoring }
+      ports:
+        - protocol: TCP
+          port: 3000
