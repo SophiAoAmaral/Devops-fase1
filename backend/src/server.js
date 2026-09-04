@@ -6,9 +6,6 @@ const servidor = app.listen(porta, () => {
   console.log(`API ouvindo na porta ${porta}`);
 });
 
-// Encerramento gracioso: primeiro o /ready passa a falhar para que o
-// orquestrador tire o container do balanceador, depois as conexoes abertas
-// terminam antes do processo sair. Sem isso, um deploy derruba requisicoes.
 function encerrar(sinal) {
   console.log(`Recebido ${sinal}, encerrando com seguranca.`);
   app.locals.encerrando = true;

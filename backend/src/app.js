@@ -15,14 +15,10 @@ app.use(cors({ origin: ORIGENS.includes('*') ? '*' : ORIGENS }));
 app.use(express.json({ limit: '10kb' }));
 app.use(medir);
 
-// Liveness: responde enquanto o processo estiver de pe. O Kubernetes reinicia
-// o container quando esta sonda falha.
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', versao: VERSAO, tempoDeVida: process.uptime() });
 });
 
-// Readiness: so entra no balanceador quando a aplicacao aceita trafego. Durante
-// o encerramento gracioso ela passa a responder 503 sem derrubar o processo.
 app.get('/ready', (req, res) => {
   if (app.locals.encerrando) {
     return res.status(503).json({ status: 'encerrando' });

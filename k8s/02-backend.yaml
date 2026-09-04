@@ -6,8 +6,6 @@ metadata:
   labels: { app: pethub-backend }
 spec:
   replicas: 2
-  # RollingUpdate com maxUnavailable 0: o Kubernetes so derruba um pod antigo
-  # depois que o novo passa no readinessProbe, entao o deploy nao tem downtime.
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -52,7 +50,6 @@ spec:
             readOnlyRootFilesystem: true
             capabilities:
               drop: ["ALL"]
-      # Da tempo para o encerramento gracioso do server.js concluir.
       terminationGracePeriodSeconds: 30
 ---
 apiVersion: v1

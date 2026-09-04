@@ -31,8 +31,6 @@ const petsCadastrados = new client.Gauge({
   registers: [registro]
 });
 
-// Usa a rota declarada no Express (/api/pets/:id) em vez da URL concreta,
-// senao cada id viraria uma serie temporal diferente no Prometheus.
 function medir(req, res, proximo) {
   const fim = duracaoRequisicao.startTimer();
 

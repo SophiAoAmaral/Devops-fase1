@@ -1,7 +1,5 @@
 name: CD - PetHub
 
-# A entrega continua so comeca depois que o CI da Fase 1 termina verde no main.
-# Assim nenhuma imagem e publicada a partir de codigo que nao passou nos testes.
 on:
   workflow_run:
     workflows: ["CI - PetHub"]
@@ -91,8 +89,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Bloqueia a promocao para staging quando a imagem tem vulnerabilidade
-      # critica: e o portao de seguranca do pipeline.
       - name: Procurar vulnerabilidades na imagem da API
         uses: aquasecurity/trivy-action@0.28.0
         with:
@@ -153,8 +149,6 @@ jobs:
     name: Implantar em producao
     runs-on: ubuntu-latest
     needs: [build, staging]
-    # O environment 'producao' guarda a regra de aprovacao manual configurada
-    # em Settings > Environments: nada vai para producao sem revisao humana.
     environment:
       name: producao
       url: https://pethub.exemplo.com.br
@@ -179,8 +173,6 @@ jobs:
           TAG: ${{ needs.build.outputs.tag }}
         run: ./scripts/deploy.sh producao
 
-      # O deploy.sh ja reverte sozinho quando o smoke test reprova; este passo
-      # cobre falhas ocorridas fora dele.
       - name: Reverter em caso de falha
         if: failure()
         env:

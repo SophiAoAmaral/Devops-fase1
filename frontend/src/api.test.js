@@ -8,7 +8,6 @@ beforeEach(() => {
   );
 });
 
-// Com o proxy do nginx, uma base terminada em /api geraria /api/api/pets.
 test('chama a API na mesma origem quando VITE_API_URL nao esta definido', async () => {
   await listarPets();
 

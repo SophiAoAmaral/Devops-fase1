@@ -1,9 +1,4 @@
 #!/usr/bin/env bash
-# Aplica os manifests no cluster Kubernetes e espera o rollout terminar.
-# Se o rollout nao concluir no prazo, desfaz sozinho com "rollout undo".
-#
-#   ./scripts/deploy-k8s.sh v1.2.3
-#
 set -Eeuo pipefail
 
 TAG="${1:-latest}"

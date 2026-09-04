@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-# Valida que a aplicacao recem-implantada realmente funciona: nao basta o
-# container estar "up", as rotas precisam responder.
 set -Eeuo pipefail
 
 BASE="${1:-http://localhost:3000}"
@@ -55,8 +53,6 @@ else
   falhou=1
 fi
 
-# O /metrics precisa ter contabilizado as chamadas acima; se nao contou, a
-# instrumentacao quebrou mesmo com a API respondendo.
 if curl -s "$BASE/metrics" | grep -q 'pethub_http_requisicoes_total'; then
   printf '  \033[32mok\033[0m   as metricas registraram o trafego do teste\n'
 else

@@ -6,7 +6,6 @@ on:
   pull_request:
     branches: [main]
   schedule:
-    # Toda segunda as 06:00 UTC: pega vulnerabilidade divulgada depois do merge.
     - cron: '0 6 * * 1'
   workflow_dispatch:
 
@@ -65,7 +64,6 @@ jobs:
       - name: Baixar o codigo
         uses: actions/checkout@v4
         with:
-          # O Gitleaks precisa do historico inteiro para varrer commits antigos.
           fetch-depth: 0
 
       - name: Rodar o Gitleaks

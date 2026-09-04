@@ -1,11 +1,4 @@
 #!/usr/bin/env bash
-# Volta a aplicacao para a imagem que estava no ar antes do ultimo deploy.
-# O deploy.sh grava essa referencia em .deploy/ e chama este script sozinho
-# quando o smoke test reprova.
-#
-#   ./scripts/rollback.sh producao          -> volta para a versao registrada
-#   ./scripts/rollback.sh producao v1.2.3   -> volta para uma tag especifica
-#
 set -Eeuo pipefail
 
 AMBIENTE="${1:-local}"

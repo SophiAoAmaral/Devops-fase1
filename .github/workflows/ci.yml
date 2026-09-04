@@ -35,7 +35,6 @@ jobs:
         working-directory: backend
         run: npm test
 
-
   frontend:
     name: Front-end
     runs-on: ubuntu-latest
@@ -113,8 +112,6 @@ jobs:
       - name: Subir a stack completa
         run: ./scripts/deploy.sh local
 
-      # Prova que os containers conversam entre si: o front-end responde e
-      # o proxy /api chega ate a API.
       - name: Verificar o front-end e o proxy da API
         run: |
           curl -fs http://localhost:8080/ > /dev/null
@@ -161,7 +158,6 @@ jobs:
           sudo mv kubeconform /usr/local/bin/
 
       - name: Validar os manifests contra o esquema do Kubernetes
-        # O kind-cluster.yaml descreve o cluster local, nao um objeto da API.
         run: |
           kubeconform -strict -summary -kubernetes-version 1.30.0 \
             -ignore-filename-pattern 'kind-cluster.*' k8s/

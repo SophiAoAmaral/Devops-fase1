@@ -1,7 +1,3 @@
-// Em producao o nginx do container serve o front-end e encaminha /api para a
-// API, e em desenvolvimento o Vite faz o mesmo proxy. Nos dois casos o
-// navegador fala com uma unica origem, por isso o padrao e a base vazia.
-// VITE_API_URL so e necessario quando a API mora em outro dominio.
 const BASE_API = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
 
 export async function listarPets() {

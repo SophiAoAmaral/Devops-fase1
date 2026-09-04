@@ -1,11 +1,4 @@
 #!/usr/bin/env bash
-# Sobe a stack do PetHub em containers e so devolve sucesso depois que o
-# smoke test passa. E o mesmo script usado no pipeline de CD e na maquina local.
-#
-#   ./scripts/deploy.sh local      -> build local + compose
-#   ./scripts/deploy.sh staging    -> imagens do registro, tag informada
-#   ./scripts/deploy.sh producao   -> idem, com confirmacao do smoke test
-#
 set -Eeuo pipefail
 
 AMBIENTE="${1:-local}"
@@ -33,8 +26,6 @@ docker compose version >/dev/null 2>&1 || COMPOSE=(docker-compose)
 export TAG REGISTRY PORTA_API PORTA_WEB
 export APP_VERSION="${APP_VERSION:-$(git rev-parse --short HEAD 2>/dev/null || echo "$TAG")}"
 
-# Guarda a imagem que esta no ar antes de mexer, para o rollback saber
-# para onde voltar.
 mkdir -p .deploy
 docker inspect --format '{{.Config.Image}}' pethub-backend 2>/dev/null \
   > ".deploy/versao-anterior-${AMBIENTE}.txt" || true

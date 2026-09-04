@@ -1,4 +1,3 @@
-# Estagio 1: instala apenas as dependencias de producao.
 FROM node:22-alpine AS dependencias
 
 WORKDIR /app
@@ -6,10 +5,8 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci --omit=dev
 
-# Estagio 2: imagem final, sem npm cache e sem devDependencies.
 FROM node:22-alpine AS producao
 
-# curl e usado pelo HEALTHCHECK e pelo smoke test do deploy.
 RUN apk add --no-cache curl
 
 WORKDIR /app
@@ -23,8 +20,6 @@ ENV APP_VERSION=$APP_VERSION
 ENV NODE_ENV=production
 ENV PORT=3000
 
-# A imagem node ja traz o usuario 'node' sem privilegios: rodar como root
-# dentro do container e um risco desnecessario.
 USER node
 
 EXPOSE 3000

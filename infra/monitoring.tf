@@ -1,6 +1,3 @@
-# Fase 2: a observabilidade da aplicacao tambem vira codigo. O painel e os
-# alarmes nascem junto com a infraestrutura, e nao por cliques no console.
-
 resource "aws_cloudwatch_log_group" "api" {
   name              = "/pethub/${var.ambiente}/api"
   retention_in_days = var.retencao_logs
@@ -22,8 +19,6 @@ resource "aws_sns_topic_subscription" "alertas_email" {
   endpoint  = var.email_alertas
 }
 
-# Espelha o alerta TaxaDeErroAlta do Prometheus: a mesma regra vale dentro e
-# fora do cluster.
 resource "aws_cloudwatch_metric_alarm" "erros_5xx" {
   alarm_name          = "${var.projeto}-${var.ambiente}-erros-5xx"
   comparison_operator = "GreaterThanThreshold"

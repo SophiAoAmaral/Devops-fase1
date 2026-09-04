@@ -1,5 +1,3 @@
-# Segmentacao de rede: o backend so aceita trafego do frontend e do
-# Prometheus, nunca de qualquer pod do cluster.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
